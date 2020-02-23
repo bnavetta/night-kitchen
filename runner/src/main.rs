@@ -1,27 +1,18 @@
-use slog::{info, o, Drain, Logger};
-use slog_async::Async;
-use slog_term::{FullFormat, TermDecorator};
+use slog::info;
 
-use logind::*;
+use night_kitchen_common::{SessionClient, root_logger};
 
-fn root_logger() -> Logger {
-    let decorator = TermDecorator::new().build();
-    let drain = FullFormat::new(decorator).build().fuse();
-    let drain = Async::new(drain).build().fuse();
-    Logger::root(
-        drain,
-        o!("component" => "night-kitchen-runner", "version" => env!("CARGO_PKG_VERSION")),
-    )
-}
+fn main() -> anyhow::Result<()> {
+    let logger = root_logger(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
 
-fn main() {
-    let logger = root_logger();
-    let manager = LoginManager::new(&logger).unwrap();
+    let sc = SessionClient::new(&logger)?;
+    info!(&logger, "Session ID is {}", sc.session_id()?);
 
-    if manager.has_sessions().unwrap() {
-        info!(&logger, "Users are logged in!");
+    if sc.has_other_sessions()? {
+        info!(&logger, "No other sessions are running");
+    } else {
+        info!(&logger, "Other sessions are running");
     }
 
-    let lock = manager.inhibit(vec![InhibitorLockType::Shutdown, InhibitorLockType::Sleep], InhibitorLockMode::Delay, "Night Kitchen Runner", "Testing").unwrap();
-    info!(&logger, "Got lock: {:?}", lock);
+    Ok(())
 }

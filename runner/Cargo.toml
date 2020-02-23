@@ -8,10 +8,5 @@ edition = "2018"
 
 [dependencies]
 anyhow = "1"
-logind = { path = "../logind" }
-slog-async = "2.4"
-slog-term = "2.5"
-
-[dependencies.slog]
-version = "2.5"
-features = [ "max_level_trace", "release_max_level_debug" ]
+night-kitchen-common = { path = "../common" }
+slog = "2.5"
