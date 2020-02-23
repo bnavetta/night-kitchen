@@ -1,0 +1,17 @@
+[package]
+name = "night-kitchen-runner"
+version = "0.1.0"
+authors = ["Ben Navetta <ben.navetta@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1"
+logind = { path = "../logind" }
+slog-async = "2.4"
+slog-term = "2.5"
+
+[dependencies.slog]
+version = "2.5"
+features = [ "max_level_trace", "release_max_level_debug" ]
