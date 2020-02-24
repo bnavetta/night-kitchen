@@ -63,9 +63,7 @@ impl<F: Fn(PowerEvent) + Send + Sync + 'static> PowerMonitor<F> {
     }
 
     /// Run the monitor on the current thread, blocking forever if no errors occur.
-    pub fn run_blocking(monitor: Arc<PowerMonitor<F>>) -> Result<()> {
-        let mut conn = Connection::new_system().context("Could not connect to system D-Bus")?;
-
+    pub fn run_blocking(conn: &mut Connection, monitor: Arc<PowerMonitor<F>>) -> Result<()> {
         PowerMonitor::register_signal_matchers(monitor.clone(), &conn);
         monitor
             .take_inhibitor(&conn)

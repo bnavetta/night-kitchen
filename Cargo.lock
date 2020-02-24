@@ -208,6 +208,7 @@ name = "night-kitchen"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "chrono",
  "dbus",
  "itertools",
  "libc",
