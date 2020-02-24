@@ -1,6 +1,23 @@
-[workspace]
-members = [
-    "scheduler",
-    "runner",
-    "common"
-]
+[package]
+name = "night-kitchen"
+version = "0.1.0"
+authors = ["Ben Navetta <ben.navetta@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+anyhow = "1"
+dbus = "0.8"
+itertools = "0.8"
+libc = "0.2"
+slog = "2.5"
+slog-async = "2.4"
+slog-journald = "2.1"
+slog-term = "2.5"
+
+[[bin]]
+name = "night-kitchen-runner"
+path = "src/bin/runner/main.rs"
+
+[[bin]]
+name = "night-kitchen-scheduler"
+path = "src/bin/scheduler/main.rs"

@@ -204,7 +204,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "night-kitchen-common"
+name = "night-kitchen"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -215,24 +215,6 @@ dependencies = [
  "slog-async",
  "slog-journald",
  "slog-term",
-]
-
-[[package]]
-name = "night-kitchen-runner"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "night-kitchen-common",
- "slog",
-]
-
-[[package]]
-name = "night-kitchen-scheduler"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "night-kitchen-common",
- "slog",
 ]
 
 [[package]]

@@ -8,11 +8,11 @@ use dbus::blocking::Connection;
 use dbus::Message;
 use slog::{debug, error, info, Logger};
 
-use crate::login1::{
+use night_kitchen::dbus::login_manager;
+use night_kitchen::dbus::logind::{
     OrgFreedesktopLogin1Manager, OrgFreedesktopLogin1ManagerPrepareForShutdown,
     OrgFreedesktopLogin1ManagerPrepareForSleep,
 };
-use crate::login_manager;
 
 /// A power event reported by logind
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]

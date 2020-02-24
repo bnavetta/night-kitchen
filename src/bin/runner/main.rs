@@ -1,9 +1,12 @@
+mod session;
+
 use slog::info;
 
-use night_kitchen_common::{SessionClient, root_logger};
+use night_kitchen::root_logger;
+use crate::session::SessionClient;
 
 fn main() -> anyhow::Result<()> {
-    let logger = root_logger(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
+    let logger = root_logger();
 
     let sc = SessionClient::new(&logger)?;
     info!(&logger, "Session ID is {}", sc.session_id()?);

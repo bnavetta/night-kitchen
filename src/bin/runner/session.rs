@@ -7,8 +7,8 @@ use dbus::blocking::stdintf::org_freedesktop_dbus::Properties;
 use libc;
 use slog::{Logger, o, warn, debug};
 
-use crate::login1::OrgFreedesktopLogin1Manager;
-use super::login_manager;
+use night_kitchen::dbus::logind::OrgFreedesktopLogin1Manager;
+use night_kitchen::dbus::login_manager;
 
 /// A client to the login daemon for getting information about user sessions.
 /// It uses the systemd-logind D-Bus API documented [here](https://www.freedesktop.org/wiki/Software/systemd/logind/).
@@ -38,6 +38,7 @@ impl SessionClient {
 
     /// Returns the ID of the session the given process belongs to
     pub fn session_id_of_pid(&self, pid: u32) -> Result<String> {
+        // TODO: consider caching, since this won't change
         let manager = login_manager(&self.connection);
 
         let session_path = manager.get_session_by_pid(pid).with_context(|| format!("Could not get session for process {}", pid))?;
