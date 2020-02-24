@@ -6,7 +6,7 @@ use slog_async::Async;
 use slog_journald::JournaldDrain;
 use slog_term::{FullFormat, TermDecorator};
 
-mod bindings;
+mod login1;
 mod power_monitor;
 mod session;
 

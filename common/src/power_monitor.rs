@@ -8,7 +8,7 @@ use dbus::blocking::Connection;
 use dbus::Message;
 use slog::{debug, error, info, Logger};
 
-use crate::bindings::{
+use crate::login1::{
     OrgFreedesktopLogin1Manager, OrgFreedesktopLogin1ManagerPrepareForShutdown,
     OrgFreedesktopLogin1ManagerPrepareForSleep,
 };

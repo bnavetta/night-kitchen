@@ -7,7 +7,7 @@ use dbus::blocking::stdintf::org_freedesktop_dbus::Properties;
 use libc;
 use slog::{Logger, o, warn, debug};
 
-use crate::bindings::OrgFreedesktopLogin1Manager;
+use crate::login1::OrgFreedesktopLogin1Manager;
 use super::login_manager;
 
 /// A client to the login daemon for getting information about user sessions.
