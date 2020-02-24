@@ -1,0 +1,13 @@
+[Unit]
+Description=Timer for Night Kitchen daily tasks
+Documentation=https://github.com/bnavetta/night-kitchen
+
+[Timer]
+# TODO: would something like OnBootSec=1d OnUnitActiveSec=1d be better?
+OnCalendar=daily
+WakeSystem=true
+AccuracySec=12h
+Persistent=true
+
+[Install]
+WantedBy=timers.target

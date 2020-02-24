@@ -1,0 +1,9 @@
+[Unit]
+Description=Scheduling daemon for Night Kitchen
+Documentation=https://github.com/bnavetta/night-kitchen
+
+[Service]
+ExecStart=/usr/lib/night-kitchen/night-kitchen-scheduler
+
+[Install]
+WantedBy=multi-user.target

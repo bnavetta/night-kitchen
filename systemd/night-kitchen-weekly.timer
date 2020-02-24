@@ -1,0 +1,12 @@
+[Unit]
+Description=Timer for Night Kitchen weekly tasks
+Documentation=https://github.com/bnavetta/night-kitchen
+
+[Timer]
+OnCalendar=weekly
+WakeSystem=true
+AccuracySec=12h
+Persistent=true
+
+[Install]
+WantedBy=timers.target

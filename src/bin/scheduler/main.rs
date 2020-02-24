@@ -25,6 +25,9 @@ fn main() -> Result<()> {
     let monitor = PowerMonitor::new(logger.clone(), "Night Kitchen Scheduler", "Scheduling next system wakeup", move |ev| {
         info!(&logger, "Got a power event"; "event" => ?ev);
     });
+
+    // TODO: on PreShutdown, figure out when next RTC alarm should be (don't clobber if there's a sooner one)
+    // TODO: on PostSuspend, record resume timestamp
     
     PowerMonitor::run_blocking(&mut conn, monitor)?;
 

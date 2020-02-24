@@ -1,0 +1,6 @@
+[Unit]
+Description=Night Kitchen daily tasks
+Documentation=https://github.com/bnavetta/night-kitchen
+Requires=multi-user.target
+After=multi-user.target
+AllowIsolate=no
