@@ -1,35 +1,64 @@
-use anyhow::Result;
-use slog::info;
+use std::env;
+use std::mem::MaybeUninit;
+use std::time::Duration;
+
+use anyhow::{bail, Result, Context};
+use chrono::{DateTime, Utc};
+use dbus::blocking::Connection;
+use libc;
+use slog::{Logger, debug, info, error};
 
 use night_kitchen::root_logger;
-use crate::session::SessionClient;
-use crate::systemd::start_unit;
 
 mod session;
 mod systemd;
 
+/// This is the shortest uptime for which night-kitchen will not hold itself responsible for booting. If the
+/// uptime at program start is any less than this, night-kitchen-runner will shut the system down afterwards.
+const MIN_INNOCENT_UPTIME: Duration = Duration::from_secs(300);
+
 fn main() -> Result<()> {
     let logger = root_logger();
 
-    // TODO: checking for sessions probably won't actually work
-    // - if system were shut down and booted from RTC alarm, won't be any sessions
-    // - if system were suspended and woken by systemd, probably will be sessions
-    // Possible option: when scheduler gets PostSleep notification, records timestamp
-    // runner can then check this timestamp (either D-Bus or file)
+    let start_time = Utc::now();
+    debug!(&logger, "night-kitchen-runner started at {}", start_time; "start_time" => start_time.timestamp());
+    let should_shutdown = caused_boot(&logger);
 
-    // TODO: start configured unit (via dbus)
+    let unit = match env::args().nth(1) {
+        Some(unit) => unit,
+        None => bail!("Usage: {} <systemd unit name>", env::args().next().unwrap_or("night-kitchen-runner".to_string()))
+    };
+    info!(&logger, "Running systemd unit {unit}", unit = &unit);
 
-    start_unit(&logger, &mut dbus::blocking::Connection::new_system()?, "atop.service")?;
+    let mut dbus_conn = Connection::new_system().context("Could not connect to system D-Bus")?;
+    systemd::start_unit(&logger, &mut dbus_conn, &unit)?;
 
-    let sc = SessionClient::new(&logger)?;
-    info!(&logger, "Session ID is {}", sc.session_id()?);
-
-    if sc.has_other_sessions()? {
-        info!(&logger, "No other sessions are running");
+    if should_shutdown {
+        info!(&logger, "Shutting system down...");
+        systemd::shutdown(&dbus_conn)?;
     } else {
-        info!(&logger, "Other sessions are running");
+        info!(&logger, "Not responsible for booting, will not shut down");
     }
 
     Ok(())
 }
 
+/// Returns `true` if night kitchen was most likely responsible for the system booting. This uses the current uptime
+/// as a heuristic, so it must be called early on 
+fn caused_boot(logger: &Logger) -> bool {
+    // Use MaybeUninit to get a zeroed sysinfo_t struct for sysinfo() to fill in
+    let mut info: libc::sysinfo = unsafe { MaybeUninit::zeroed().assume_init() };
+
+    let status = unsafe {
+        libc::sysinfo(&mut info)
+    };
+
+    if status == 0 {
+        let uptime = Duration::from_secs(info.uptime as u64);
+        debug!(&logger, "Uptime is {:?}", uptime);
+        uptime < MIN_INNOCENT_UPTIME
+    } else {
+        error!(&logger, "sysinfo() failed, could not determine uptime");
+        false
+    }
+}
