@@ -3,14 +3,13 @@ use std::mem::MaybeUninit;
 use std::time::Duration;
 
 use anyhow::{bail, Result, Context};
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 use dbus::blocking::Connection;
 use libc;
 use slog::{Logger, debug, info, error};
 
 use night_kitchen::root_logger;
 
-mod session;
 mod systemd;
 
 /// This is the shortest uptime for which night-kitchen will not hold itself responsible for booting. If the

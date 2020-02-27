@@ -4,6 +4,7 @@ use dbus::blocking::Connection;
 use slog::{Logger, debug, info};
 
 mod power_monitor;
+mod server;
 mod time;
 
 use night_kitchen::root_logger;
