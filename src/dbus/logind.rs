@@ -97,7 +97,7 @@ pub trait OrgFreedesktopLogin1Manager {
     fn ncurrent_sessions(&self) -> Result<u64, dbus::Error>;
 }
 
-impl<'a, C: ::std::ops::Deref<Target=blocking::Connection>> OrgFreedesktopLogin1Manager for blocking::Proxy<'a, C> {
+impl<'a, C: ::std::ops::Deref<Target=blocking::LocalConnection>> OrgFreedesktopLogin1Manager for blocking::Proxy<'a, C> {
 
     fn get_session(&self, arg0: &str) -> Result<dbus::Path<'static>, dbus::Error> {
         self.method_call("org.freedesktop.login1.Manager", "GetSession", (arg0, ))

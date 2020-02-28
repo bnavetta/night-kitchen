@@ -1,6 +1,8 @@
+use std::time::Duration;
+
 use anyhow::{Result, Context, anyhow};
 use chrono::{DateTime, Utc, Local};
-use dbus::blocking::Connection;
+use dbus::blocking::LocalConnection;
 use slog::{Logger, debug, info};
 
 mod power_monitor;
@@ -10,32 +12,45 @@ mod time;
 use night_kitchen::root_logger;
 use night_kitchen::dbus::systemd_unit;
 use night_kitchen::dbus::systemd_timer::OrgFreedesktopSystemd1Timer;
-use crate::power_monitor::PowerMonitor;
+
+use crate::power_monitor::{PowerMonitor, PowerEvent};
 use crate::time::{from_timestamp_usecs, monotonic_to_realtime};
 
 fn main() -> Result<()> {
     let logger = root_logger();
 
-    let mut conn = Connection::new_system().context("Could not connect to system D-Bus")?;
+    let mut conn = LocalConnection::new_system().context("Could not connect to system D-Bus")?;
 
     for unit in &["systemd-tmpfiles-clean.timer", "shadow.timer"] {
         let next_activation = next_activation(&logger, &conn, unit)?.with_timezone(&Local);
         info!(&logger, "{} will next run at {}", unit, next_activation);
     }
 
+    let server = server::add_server(&conn).context("Could not add D-Bus server")?;
+
     let monitor = PowerMonitor::new(logger.clone(), "Night Kitchen Scheduler", "Scheduling next system wakeup", move |ev| {
         info!(&logger, "Got a power event"; "event" => ?ev);
+        match ev {
+            PowerEvent::PreSleep => server.set_resume_timestamp(Utc::now()),
+            _ => ()
+        };
     });
 
-    // TODO: on PreShutdown, figure out when next RTC alarm should be (don't clobber if there's a sooner one)
-    // TODO: on PostSuspend, record resume timestamp
-    
-    PowerMonitor::run_blocking(&mut conn, monitor)?;
+    // Need to add a D-bus policy file allowing us to request the service name in /usr/share/dbus-1/system.d
+    // Or just write to a file instead of using a D-Bus server
 
-    Ok(())
+    // TODO: on PreShutdown, figure out when next RTC alarm should be (don't clobber if there's a sooner one)
+
+    PowerMonitor::register(&mut conn, monitor)?;
+
+    loop {
+        conn.process(Duration::from_secs(60))?;
+    }
+
+    // TODO: handle ctrl-c gracefully
 }
 
-fn next_activation(logger: &Logger, conn: &Connection, timer_unit: &str) -> Result<DateTime<Utc>> {
+fn next_activation(logger: &Logger, conn: &LocalConnection, timer_unit: &str) -> Result<DateTime<Utc>> {
     let timer = systemd_unit(conn, timer_unit)?;
 
     // If either is 0, that means the timer doesn't include any events using the corresponding clock

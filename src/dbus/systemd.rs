@@ -191,7 +191,7 @@ pub trait OrgFreedesktopSystemd1Manager {
     fn default_oompolicy(&self) -> Result<String, dbus::Error>;
 }
 
-impl<'a, C: ::std::ops::Deref<Target=blocking::Connection>> OrgFreedesktopSystemd1Manager for blocking::Proxy<'a, C> {
+impl<'a, C: ::std::ops::Deref<Target=blocking::LocalConnection>> OrgFreedesktopSystemd1Manager for blocking::Proxy<'a, C> {
 
     fn get_unit(&self, arg0: &str) -> Result<dbus::Path<'static>, dbus::Error> {
         self.method_call("org.freedesktop.systemd1.Manager", "GetUnit", (arg0, ))

@@ -4,7 +4,7 @@ use std::sync::atomic::{AtomicI64, Ordering};
 
 use anyhow::{Result, Context};
 use chrono::{DateTime, Utc};
-use dbus::blocking::Connection;
+use dbus::blocking::LocalConnection;
 use dbus::tree::Factory;
 
 /// Representation of server state, for updating
@@ -35,7 +35,7 @@ impl Server {
     }
 }
 
-pub fn add_server(conn: &Connection) -> Result<Arc<Server>> {
+pub fn add_server(conn: &LocalConnection) -> Result<Arc<Server>> {
     conn.request_name("com.bennavetta.nightkitchen.scheduler", false, true, false).context("Could not request name from D-Bus")?;
 
     let server = Arc::new(Server::new());

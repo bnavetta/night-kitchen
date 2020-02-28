@@ -21,7 +21,7 @@ pub trait OrgFreedesktopSystemd1Timer {
     fn remain_after_elapse(&self) -> Result<bool, dbus::Error>;
 }
 
-impl<'a, C: ::std::ops::Deref<Target=blocking::Connection>> OrgFreedesktopSystemd1Timer for blocking::Proxy<'a, C> {
+impl<'a, C: ::std::ops::Deref<Target=blocking::LocalConnection>> OrgFreedesktopSystemd1Timer for blocking::Proxy<'a, C> {
 
     fn unit(&self) -> Result<String, dbus::Error> {
         <Self as blocking::stdintf::org_freedesktop_dbus::Properties>::get(&self, "org.freedesktop.systemd1.Timer", "Unit")

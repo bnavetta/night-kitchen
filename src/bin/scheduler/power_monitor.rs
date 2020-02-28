@@ -1,10 +1,9 @@
 use std::cell::Cell;
 use std::sync::{Arc, Mutex};
-use std::time::Duration;
 
 use anyhow::{anyhow, Context, Result};
 use dbus::arg::OwnedFd;
-use dbus::blocking::Connection;
+use dbus::blocking::LocalConnection;
 use dbus::Message;
 use slog::{debug, error, info, Logger};
 
@@ -63,21 +62,17 @@ impl<F: Fn(PowerEvent) + Send + Sync + 'static> PowerMonitor<F> {
     }
 
     /// Run the monitor on the current thread, blocking forever if no errors occur.
-    pub fn run_blocking(conn: &mut Connection, monitor: Arc<PowerMonitor<F>>) -> Result<()> {
+    pub fn register(conn: &LocalConnection, monitor: Arc<PowerMonitor<F>>) -> Result<()> {
         PowerMonitor::register_signal_matchers(monitor.clone(), &conn);
         monitor
             .take_inhibitor(&conn)
             .context("Could not take inhibitor lock")?;
-
-        // TODO: way to break out of loop?
-        loop {
-            conn.process(Duration::from_secs(60))?;
-        }
+        Ok(())
     }
 
     /// Using the given system D-Bus connection, request a `delay` inhibitor lock with the `sleep` and
     /// `shutdown` lock types. If this monitor already holds an inhibitor lock, it will not take a new one.
-    fn take_inhibitor(&self, conn: &Connection) -> Result<()> {
+    fn take_inhibitor(&self, conn: &LocalConnection) -> Result<()> {
         let manager = login_manager(conn);
 
         let inhibitor = self
@@ -121,13 +116,13 @@ impl<F: Fn(PowerEvent) + Send + Sync + 'static> PowerMonitor<F> {
     /// the monitor's inhibitor lock will be updated appropriately following the standard
     /// [delay lock pattern](https://www.freedesktop.org/wiki/Software/systemd/inhibit/).
     /// In addition, the monitor's callback will be called with the corresponding `PowerEvent`.
-    fn register_signal_matchers(monitor: Arc<PowerMonitor<F>>, conn: &Connection) {
+    fn register_signal_matchers(monitor: Arc<PowerMonitor<F>>, conn: &LocalConnection) {
         let manager = login_manager(conn);
 
         {
             let monitor = monitor.clone();
             let _ = manager.match_signal(
-                move |p: OrgFreedesktopLogin1ManagerPrepareForSleep, c: &Connection, _: &Message| {
+                move |p: OrgFreedesktopLogin1ManagerPrepareForSleep, c: &LocalConnection, _: &Message| {
                     let cb = &monitor.callback;
                     if p.arg0 {
                         info!(&monitor.logger, "About to sleep");
@@ -150,7 +145,7 @@ impl<F: Fn(PowerEvent) + Send + Sync + 'static> PowerMonitor<F> {
         }
 
         let _ = manager.match_signal(
-            move |p: OrgFreedesktopLogin1ManagerPrepareForShutdown, _: &Connection, message: &Message| {
+            move |p: OrgFreedesktopLogin1ManagerPrepareForShutdown, _: &LocalConnection, message: &Message| {
                 let cb = &monitor.callback;
                 if p.arg0 {
                     info!(&monitor.logger, "About to shut down");

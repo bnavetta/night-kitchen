@@ -4,7 +4,7 @@ use std::time::Duration;
 
 use anyhow::{Result, Context};
 use dbus::Message;
-use dbus::blocking::Connection;
+use dbus::blocking::LocalConnection;
 use slog::{Logger, debug, error};
 
 use night_kitchen::dbus::{login_manager, systemd_manager};
@@ -12,7 +12,7 @@ use night_kitchen::dbus::systemd::{OrgFreedesktopSystemd1Manager, OrgFreedesktop
 use night_kitchen::dbus::logind::OrgFreedesktopLogin1Manager;
 
 /// Starts the given systemd unit and blocks until it has started.
-pub fn start_unit(logger: &Logger, conn: &mut Connection, unit: &str) -> Result<()> {
+pub fn start_unit(logger: &Logger, conn: &mut LocalConnection, unit: &str) -> Result<()> {
     let manager = systemd_manager(conn);
 
     manager.subscribe().context("Could not subscribe to systemd signals")?;
@@ -24,7 +24,7 @@ pub fn start_unit(logger: &Logger, conn: &mut Connection, unit: &str) -> Result<
         let started = started.clone();
         let unit = unit.to_string();
 
-        manager.match_signal(move |j: OrgFreedesktopSystemd1ManagerJobRemoved, _: &Connection, _: &Message| {
+        manager.match_signal(move |j: OrgFreedesktopSystemd1ManagerJobRemoved, _: &LocalConnection, _: &Message| {
             if j.arg2 == unit {
                 debug!(&logger, "Job for {} completed with result: {}", unit, j.arg3; "unit" => &unit, "result" => &j.arg3, "job" => %j.arg1, "id" => j.arg0);
                 started.store(true, Ordering::Relaxed);
@@ -55,7 +55,7 @@ pub fn start_unit(logger: &Logger, conn: &mut Connection, unit: &str) -> Result<
 }
 
 /// Powers off the system
-pub fn shutdown(conn: &Connection) -> Result<()> {
+pub fn shutdown(conn: &LocalConnection) -> Result<()> {
     // Important: Both the systemd and logind D-Bus APIs have PowerOff methods. The logind method goes through a graceful shutdown, respecting inhibitor locks
     // and stopping services, while the systemd one immediately shuts the system down. Calling the systemd one directly by mistake would be unfortunate.
     let manager = login_manager(conn);
@@ -66,7 +66,7 @@ pub fn shutdown(conn: &Connection) -> Result<()> {
 }
 
 /// Puts the system to sleep
-pub fn suspend(conn: &Connection) -> Result<()> {
+pub fn suspend(conn: &LocalConnection) -> Result<()> {
     let manager = login_manager(conn);
     // Boolean is the same PolicyKit flag as in shutdown()
     manager.suspend(false).context("Could not suspend the system")?;

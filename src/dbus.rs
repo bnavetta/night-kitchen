@@ -2,7 +2,7 @@
 use std::time::Duration;
 
 use anyhow::{Result, Context};
-use dbus::blocking::{Connection, Proxy};
+use dbus::blocking::{LocalConnection, Proxy};
 
 use crate::dbus::systemd::OrgFreedesktopSystemd1Manager;
 
@@ -13,7 +13,7 @@ pub mod systemd_timer;
 const PROXY_TIMEOUT: Duration = Duration::from_millis(500);
 
 /// Creates a D-Bus connection proxy referring to the systemd-logind manager API object
-pub fn login_manager<'a>(connection: &'a Connection) -> Proxy<'a, &'a Connection> {
+pub fn login_manager<'a>(connection: &'a LocalConnection) -> Proxy<'a, &'a LocalConnection> {
     connection.with_proxy(
         "org.freedesktop.login1",
         "/org/freedesktop/login1",
@@ -22,7 +22,7 @@ pub fn login_manager<'a>(connection: &'a Connection) -> Proxy<'a, &'a Connection
 }
 
 /// Creates a D-Bus connection proxy referring to the systemd manager API object
-pub fn systemd_manager<'a>(connection: &'a Connection) -> Proxy<'a, &'a Connection> {
+pub fn systemd_manager<'a>(connection: &'a LocalConnection) -> Proxy<'a, &'a LocalConnection> {
     connection.with_proxy(
         "org.freedesktop.systemd1",
         "/org/freedesktop/systemd1",
@@ -32,7 +32,7 @@ pub fn systemd_manager<'a>(connection: &'a Connection) -> Proxy<'a, &'a Connecti
 
 /// Creates a D-Bus connection proxy referring to the systemd unit with the given name. Fails if the unit
 /// does not exist or its D-Bus path cannot be determined for other reasons.
-pub fn systemd_unit<'a>(connection: &'a Connection, unit_name: &str) -> Result<Proxy<'a, &'a Connection>> {
+pub fn systemd_unit<'a>(connection: &'a LocalConnection, unit_name: &str) -> Result<Proxy<'a, &'a LocalConnection>> {
     let manager = systemd_manager(connection);
     let unit_path = manager.get_unit(unit_name)
         .with_context(|| format!("Could not find D-Bus path for systemd unit {}", unit_name))?;

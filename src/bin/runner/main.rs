@@ -4,7 +4,7 @@ use std::time::Duration;
 
 use anyhow::{bail, Result, Context};
 use chrono::Utc;
-use dbus::blocking::Connection;
+use dbus::blocking::LocalConnection;
 use libc;
 use slog::{Logger, debug, info, error};
 
@@ -29,7 +29,7 @@ fn main() -> Result<()> {
     };
     info!(&logger, "Running systemd unit {unit}", unit = &unit);
 
-    let mut dbus_conn = Connection::new_system().context("Could not connect to system D-Bus")?;
+    let mut dbus_conn = LocalConnection::new_system().context("Could not connect to system D-Bus")?;
     systemd::start_unit(&logger, &mut dbus_conn, &unit)?;
 
     if should_shutdown {
