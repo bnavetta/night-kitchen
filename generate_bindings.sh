@@ -27,4 +27,3 @@ dbus-codegen-rust -s \
 
 # TODO: automate this
 echo "The create_session method must be removed, since dbus-rs only supports up to 10 arguments"
-echo "The bindings must be modified to be implemented on a LocalConnection Proxy rather than a Connection proxy"

@@ -4,6 +4,7 @@ Documentation=https://github.com/bnavetta/night-kitchen
 
 [Service]
 ExecStart=/usr/lib/night-kitchen/night-kitchen-scheduler
+RuntimeDirectory=night-kitchen
 
 [Install]
 WantedBy=multi-user.target

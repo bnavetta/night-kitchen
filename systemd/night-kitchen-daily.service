@@ -5,3 +5,5 @@ Documentation=https://github.com/bnavetta/night-kitchen
 [Service]
 Type=oneshot
 ExecStart=/usr/lib/night-kitchen/night-kitchen-runner night-kitchen-daily.target
+RuntimeDirectory=night-kitchen
+
