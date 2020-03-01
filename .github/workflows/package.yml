@@ -4,6 +4,7 @@ name: Release Packages
 on:
   release:
     types: [published]
+  push:
 
 jobs:
   arch_package:
@@ -11,6 +12,6 @@ jobs:
     name: Build an Arch Linux package
     steps:
       - uses: actions/checkout@v2
-      - uses: bnavetta/arch-makepkg-action
+      - uses: bnavetta/arch-makepkg-action@v1.1
         with:
           path: packaging/arch
