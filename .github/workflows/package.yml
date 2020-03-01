@@ -1,12 +1,12 @@
 ---
 
-name: release-packages
+name: Release Packages
 on:
   release:
     types: [published]
 
 jobs:
-  arch_package_job:
+  arch_package:
     runs-on: ubuntu-latest
     name: Build an Arch Linux package
     steps:
