@@ -1,15 +1,15 @@
-pkgname='night-kitchen-git'
-pkgver() {
-    cd "$pkgname"
-    git describe --long | sed 's/^v//;s\([^-]*-g\)/r\1/;s/-/./g'
-}
+pkgname='night-kitchen'
+pkgver='v0.1.1'
 pkgrel=1
 pkgdesc='Periodic task runner for systems that are not always up'
+license=(MIT APACHE)
 arch=('x86_64')
 url='https://github.com/bnavetta/night-kitchen'
 makedepends=(cargo git rust)
-source=('git+https://github.com/bnavetta/night-kitchen')
+depends=(dbus)
+source=("git+https://github.com/bnavetta/night-kitchen#tag=${pkgver}")
 md5sums=('SKIP')
+noextract=()
 
 build() {
     cd "$srcdir/$pkgname"
@@ -38,4 +38,8 @@ package() {
     install -Dm644 systemd/night-kitchen-weekly.timer \
         "$pkgdir/usr/lib/systemd/system/night-kitchen-weekly.timer"
 
+    install -Dm644 LICENSE-APACHE \
+        "$pkgdir/usr/share/licenses/night-kitchen/LICENSE-APACHE"
+    install -Dm644 LICENSE-MIT \
+        "$pkgdir/usr/share/licenses/night-kitchen/LICENSE-MIT"
 }
