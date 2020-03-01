@@ -13,7 +13,7 @@ pub mod systemd_timer;
 const PROXY_TIMEOUT: Duration = Duration::from_millis(500);
 
 /// Creates a D-Bus connection proxy referring to the systemd-logind manager API object
-pub fn login_manager<'a>(connection: &'a Connection) -> Proxy<'a, &'a Connection> {
+pub fn login_manager(connection: &Connection) -> Proxy<'_, &Connection> {
     connection.with_proxy(
         "org.freedesktop.login1",
         "/org/freedesktop/login1",
@@ -22,7 +22,7 @@ pub fn login_manager<'a>(connection: &'a Connection) -> Proxy<'a, &'a Connection
 }
 
 /// Creates a D-Bus connection proxy referring to the systemd manager API object
-pub fn systemd_manager<'a>(connection: &'a Connection) -> Proxy<'a, &'a Connection> {
+pub fn systemd_manager(connection: &Connection) -> Proxy<'_, &Connection> {
     connection.with_proxy(
         "org.freedesktop.systemd1",
         "/org/freedesktop/systemd1",

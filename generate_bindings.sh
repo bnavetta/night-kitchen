@@ -25,5 +25,10 @@ dbus-codegen-rust -s \
     -c blocking -m None \
     -o src/dbus/logind.rs
 
+# Don't run clippy on generated files, since they have complex types that trigger warnings
+for generated_file in systemd.rs systemd_timer.rs logind.rs; do
+    sed -i '1i #![allow(clippy::all)]\n#![allow(unused_imports)]' "src/dbus/$generated_file"
+done
+
 # TODO: automate this
 echo "The create_session method must be removed, since dbus-rs only supports up to 10 arguments"

@@ -34,7 +34,7 @@ fn main() -> Result<()> {
             "Usage: {} <systemd unit name>",
             env::args()
                 .next()
-                .unwrap_or("night-kitchen-runner".to_string())
+                .unwrap_or_else(|| "night-kitchen-runner".to_string())
         ),
     };
     info!(&logger, "Running systemd unit {unit}", unit = &unit);

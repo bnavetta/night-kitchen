@@ -41,6 +41,9 @@ fn main() -> Result<()> {
                         error!(&logger, "Could not update resume timestamp: {}", err; "error" => ?err);
                     }
                 }
+                PowerEvent::PreShutdown => {
+                    error!(&logger, "TODO: set RTC alarm");
+                }
                 _ => (),
             };
         },
@@ -48,7 +51,7 @@ fn main() -> Result<()> {
 
     // TODO: on PreShutdown, figure out when next RTC alarm should be (don't clobber if there's a sooner one)
 
-    PowerMonitor::register(&mut conn, monitor)?;
+    PowerMonitor::register(&conn, monitor)?;
 
     let shutdown = Arc::new(AtomicBool::new(false));
     signal_hook::flag::register(signal_hook::SIGTERM, shutdown.clone())
