@@ -1,0 +1,16 @@
+---
+
+name: release-packages
+on:
+  release:
+    types: [published]
+
+jobs:
+  arch_package_job:
+    runs-on: ubuntu-latest
+    name: Build an Arch Linux package
+    steps:
+      - uses: actions/checkout@v2
+      - uses: bnavetta/arch-makepkg-action@v1
+        with:
+          path: packaging/arch

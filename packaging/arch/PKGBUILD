@@ -1,0 +1,41 @@
+pkgname='night-kitchen-git'
+pkgver() {
+    cd "$pkgname"
+    git describe --long | sed 's/^v//;s\([^-]*-g\)/r\1/;s/-/./g'
+}
+pkgrel=1
+pkgdesc='Periodic task runner for systems that are not always up'
+arch=('x86_64')
+url='https://github.com/bnavetta/night-kitchen'
+makedepends=(cargo git rust)
+source=('git+https://github.com/bnavetta/night-kitchen')
+md5sums=('SKIP')
+
+build() {
+    cd "$srcdir/$pkgname"
+    cargo build --release
+}
+
+package() {
+    cd "$srcdir/$pkgname"
+
+    install -Dm755 target/release/night-kitchen-runner \
+        "$pkgdir/usr/lib/night-kitchen/night-kitchen-runner"
+    
+    install -Dm755 target/release/night-kitchen-scheduler \
+        "$pkgdir/usr/lib/night-kitchen/night-kitchen-scheduler"
+
+    install -Dm644 systemd/night-kitchen-daily.service \
+        "$pkgdir/usr/lib/systemd/system/night-kitchen-daily.service"
+    install -Dm644 systemd/night-kitchen-daily.target \
+        "$pkgdir/usr/lib/systemd/system/night-kitchen-daily.target"
+    install -Dm644 systemd/night-kitchen-daily.timer \
+        "$pkgdir/usr/lib/systemd/system/night-kitchen-daily.timer"
+    install -Dm644 systemd/night-kitchen-weekly.service \
+        "$pkgdir/usr/lib/systemd/system/night-kitchen-weekly.service"
+    install -Dm644 systemd/night-kitchen-weekly.target \
+        "$pkgdir/usr/lib/systemd/system/night-kitchen-weekly.target"
+    install -Dm644 systemd/night-kitchen-weekly.timer \
+        "$pkgdir/usr/lib/systemd/system/night-kitchen-weekly.timer"
+
+}
