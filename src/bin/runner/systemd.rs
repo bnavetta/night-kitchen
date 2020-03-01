@@ -1,21 +1,25 @@
-use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 use std::time::Duration;
 
-use anyhow::{Result, Context};
-use dbus::Message;
+use anyhow::{Context, Result};
 use dbus::blocking::Connection;
-use slog::{Logger, debug, error};
+use dbus::Message;
+use slog::{debug, error, Logger};
 
-use night_kitchen::dbus::{login_manager, systemd_manager};
-use night_kitchen::dbus::systemd::{OrgFreedesktopSystemd1Manager, OrgFreedesktopSystemd1ManagerJobRemoved};
 use night_kitchen::dbus::logind::OrgFreedesktopLogin1Manager;
+use night_kitchen::dbus::systemd::{
+    OrgFreedesktopSystemd1Manager, OrgFreedesktopSystemd1ManagerJobRemoved,
+};
+use night_kitchen::dbus::{login_manager, systemd_manager};
 
 /// Starts the given systemd unit and blocks until it has started.
 pub fn start_unit(logger: &Logger, conn: &mut Connection, unit: &str) -> Result<()> {
     let manager = systemd_manager(conn);
 
-    manager.subscribe().context("Could not subscribe to systemd signals")?;
+    manager
+        .subscribe()
+        .context("Could not subscribe to systemd signals")?;
 
     let started = Arc::new(AtomicBool::new(false));
 
@@ -38,7 +42,7 @@ pub fn start_unit(logger: &Logger, conn: &mut Connection, unit: &str) -> Result<
     match manager.start_unit(&unit, "fail") {
         Ok(job) => {
             debug!(logger, "Started job {} for {}", job, unit; "job" => %job, "unit" => unit);
-        },
+        }
         Err(err) => {
             error!(logger, "Failed to start {}", unit; "unit" => unit, "error" => ?err);
             return Err(err.into());
@@ -46,7 +50,8 @@ pub fn start_unit(logger: &Logger, conn: &mut Connection, unit: &str) -> Result<
     };
 
     while !started.load(Ordering::Relaxed) {
-        conn.process(Duration::from_millis(500)).context("Failed waiting for D-Bus signals from systemd")?;
+        conn.process(Duration::from_millis(500))
+            .context("Failed waiting for D-Bus signals from systemd")?;
     }
 
     // TODO: capture job status
@@ -61,7 +66,8 @@ pub fn shutdown(conn: &Connection) -> Result<()> {
     let manager = login_manager(conn);
     // The boolean argument is whether PolicyKit should prompt the user for authentication if needed. Since night-kitchen-runner is activated by a timer,
     // we want to fail-fast if we don't have sufficient privileges instead.
-    OrgFreedesktopLogin1Manager::power_off(&manager, false).context("Could not power off the system")?;
+    OrgFreedesktopLogin1Manager::power_off(&manager, false)
+        .context("Could not power off the system")?;
     Ok(())
 }
 
@@ -69,6 +75,8 @@ pub fn shutdown(conn: &Connection) -> Result<()> {
 pub fn suspend(conn: &Connection) -> Result<()> {
     let manager = login_manager(conn);
     // Boolean is the same PolicyKit flag as in shutdown()
-    manager.suspend(false).context("Could not suspend the system")?;
+    manager
+        .suspend(false)
+        .context("Could not suspend the system")?;
     Ok(())
 }

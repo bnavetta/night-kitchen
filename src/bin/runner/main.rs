@@ -3,13 +3,13 @@ use std::fs;
 use std::mem::MaybeUninit;
 use std::time::Duration;
 
-use anyhow::{bail, Result, Context};
+use anyhow::{bail, Context, Result};
 use chrono::{DateTime, TimeZone, Utc};
 use dbus::blocking::Connection;
 use libc;
-use slog::{Logger, debug, info, error};
+use slog::{debug, error, info, Logger};
 
-use night_kitchen::{root_logger, resume_timestamp_file};
+use night_kitchen::{resume_timestamp_file, root_logger};
 
 mod systemd;
 
@@ -30,7 +30,12 @@ fn main() -> Result<()> {
 
     let unit = match env::args().nth(1) {
         Some(unit) => unit,
-        None => bail!("Usage: {} <systemd unit name>", env::args().next().unwrap_or("night-kitchen-runner".to_string()))
+        None => bail!(
+            "Usage: {} <systemd unit name>",
+            env::args()
+                .next()
+                .unwrap_or("night-kitchen-runner".to_string())
+        ),
     };
     info!(&logger, "Running systemd unit {unit}", unit = &unit);
 
@@ -51,14 +56,12 @@ fn main() -> Result<()> {
 }
 
 /// Returns `true` if night kitchen was most likely responsible for the system booting. This uses the current uptime
-/// as a heuristic, so it must be called early on 
+/// as a heuristic, so it must be called early on
 fn caused_boot(logger: &Logger) -> bool {
     // Use MaybeUninit to get a zeroed sysinfo_t struct for sysinfo() to fill in
     let mut info: libc::sysinfo = unsafe { MaybeUninit::zeroed().assume_init() };
 
-    let status = unsafe {
-        libc::sysinfo(&mut info)
-    };
+    let status = unsafe { libc::sysinfo(&mut info) };
 
     if status == 0 {
         let uptime = Duration::from_secs(info.uptime as u64);
@@ -74,7 +77,7 @@ fn caused_wake(logger: &Logger, start_time: DateTime<Utc>) -> bool {
     let timestamp_str = match fs::read_to_string(resume_timestamp_file()) {
         Ok(s) => s,
         // Assume this failed because the system has not suspended and the file does not exist
-        Err(_) => return false
+        Err(_) => return false,
     };
 
     let timestamp_ms: i64 = match timestamp_str.parse() {
@@ -91,6 +94,6 @@ fn caused_wake(logger: &Logger, start_time: DateTime<Utc>) -> bool {
         Ok(delta) => delta < MIN_INNOCENT_WAKETIME,
         // If night-kitchen-scheduler didn't write the resume timestamp until after night-kitchen-runner started, it almost certainly is
         // the reason the system resumed
-        Err(_) => true
+        Err(_) => true,
     }
 }

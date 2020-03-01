@@ -1,23 +1,23 @@
 use std::fs::File;
 use std::io::Write;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 use std::time::Duration;
 
-use anyhow::{Result, Context, anyhow};
-use chrono::{DateTime, Utc, Local};
+use anyhow::{anyhow, Context, Result};
+use chrono::{DateTime, Local, Utc};
 use dbus::blocking::Connection;
 use signal_hook;
-use slog::{Logger, debug, info, error};
+use slog::{debug, error, info, Logger};
 
 mod power_monitor;
 mod time;
 
-use night_kitchen::{root_logger, resume_timestamp_file};
-use night_kitchen::dbus::systemd_unit;
 use night_kitchen::dbus::systemd_timer::OrgFreedesktopSystemd1Timer;
+use night_kitchen::dbus::systemd_unit;
+use night_kitchen::{resume_timestamp_file, root_logger};
 
-use crate::power_monitor::{PowerMonitor, PowerEvent};
+use crate::power_monitor::{PowerEvent, PowerMonitor};
 use crate::time::{from_timestamp_usecs, monotonic_to_realtime};
 
 fn main() -> Result<()> {
@@ -30,21 +30,29 @@ fn main() -> Result<()> {
         info!(&logger, "{} will next run at {}", unit, next_activation);
     }
 
-    let monitor = PowerMonitor::new(logger.clone(), "Night Kitchen Scheduler", "Scheduling next system wakeup", move |ev| {
-        match ev {
-            PowerEvent::PostSleep => if let Err(err) = update_resume_timestamp(&logger) {
-                error!(&logger, "Could not update resume timestamp: {}", err; "error" => ?err);
-            },
-            _ => ()
-        };
-    });
+    let monitor = PowerMonitor::new(
+        logger.clone(),
+        "Night Kitchen Scheduler",
+        "Scheduling next system wakeup",
+        move |ev| {
+            match ev {
+                PowerEvent::PostSleep => {
+                    if let Err(err) = update_resume_timestamp(&logger) {
+                        error!(&logger, "Could not update resume timestamp: {}", err; "error" => ?err);
+                    }
+                }
+                _ => (),
+            };
+        },
+    );
 
     // TODO: on PreShutdown, figure out when next RTC alarm should be (don't clobber if there's a sooner one)
 
     PowerMonitor::register(&mut conn, monitor)?;
 
     let shutdown = Arc::new(AtomicBool::new(false));
-    signal_hook::flag::register(signal_hook::SIGTERM, shutdown.clone()).context("Could not add SIGTERM hook")?;
+    signal_hook::flag::register(signal_hook::SIGTERM, shutdown.clone())
+        .context("Could not add SIGTERM hook")?;
 
     while !shutdown.load(Ordering::SeqCst) {
         conn.process(Duration::from_secs(60))?;
@@ -58,9 +66,11 @@ fn update_resume_timestamp(logger: &Logger) -> Result<()> {
     let timestamp_file = resume_timestamp_file();
     debug!(&logger, "Writing resume timestamp"; "timestamp" => %timestamp, "file" => %timestamp_file.display());
 
-    let mut f = File::create(&timestamp_file).with_context(|| format!("Could not create {}", timestamp_file.display()))?;
+    let mut f = File::create(&timestamp_file)
+        .with_context(|| format!("Could not create {}", timestamp_file.display()))?;
     // Write as a string for debuggability
-    write!(&mut f, "{}", timestamp.timestamp_millis()).context("Could not write to timestamp file")?;
+    write!(&mut f, "{}", timestamp.timestamp_millis())
+        .context("Could not write to timestamp file")?;
 
     Ok(())
 }
@@ -69,7 +79,10 @@ fn next_activation(logger: &Logger, conn: &Connection, timer_unit: &str) -> Resu
     let timer = systemd_unit(conn, timer_unit)?;
 
     // If either is 0, that means the timer doesn't include any events using the corresponding clock
-    let next_realtime = match timer.next_elapse_usec_realtime().context("Could not get next CLOCK_REALTIME elapsation point")? {
+    let next_realtime = match timer
+        .next_elapse_usec_realtime()
+        .context("Could not get next CLOCK_REALTIME elapsation point")?
+    {
         0 => None,
         realtime_usecs => {
             let next_realtime = from_timestamp_usecs(realtime_usecs);
@@ -78,7 +91,10 @@ fn next_activation(logger: &Logger, conn: &Connection, timer_unit: &str) -> Resu
         }
     };
 
-    let next_monotonic = match timer.next_elapse_usec_monotonic().context("Could not get next monotonic elapsation point")? {
+    let next_monotonic = match timer
+        .next_elapse_usec_monotonic()
+        .context("Could not get next monotonic elapsation point")?
+    {
         0 => None,
         monotonic_usecs => {
             let next_monotonic = monotonic_to_realtime(from_timestamp_usecs(monotonic_usecs));
@@ -90,9 +106,8 @@ fn next_activation(logger: &Logger, conn: &Connection, timer_unit: &str) -> Resu
     let next_elapse = match (next_realtime, next_monotonic) {
         (_, None) => next_realtime,
         (None, _) => next_monotonic,
-        (Some(next_realtime), Some(next_monotonic)) => Some(next_realtime.min(next_monotonic))
+        (Some(next_realtime), Some(next_monotonic)) => Some(next_realtime.min(next_monotonic)),
     };
 
     next_elapse.ok_or_else(|| anyhow!("Neither monotonic nor realtime next elapsation point"))
 }
-

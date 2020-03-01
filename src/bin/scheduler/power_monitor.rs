@@ -27,10 +27,10 @@ pub enum PowerEvent {
 }
 
 /// State manager for detecting events around system suspend and shutdown.
-/// 
+///
 /// Internally, `PowerMonitor` uses D-Bus signals to notice when the system is preparing to sleep or shutdown. It also
 /// uses systemd inhibitor locks to prevent the system from doing so until its callback has completed.
-/// 
+///
 /// See [the systemd documentation](https://www.freedesktop.org/wiki/Software/systemd/inhibit/) for more details.
 pub struct PowerMonitor<F: Fn(PowerEvent) + Send + Sync + 'static> {
     // The "who" and "why" we're taking inhibitor locks
@@ -44,7 +44,7 @@ pub struct PowerMonitor<F: Fn(PowerEvent) + Send + Sync + 'static> {
 
 impl<F: Fn(PowerEvent) + Send + Sync + 'static> PowerMonitor<F> {
     /// Create a new `PowerMonitor` that calls `callback` on any system power events it detects.
-    /// 
+    ///
     /// The `inhibitor_source` and `inhibitor_reason` values are passed to systemd and indicate who is delaying shutdown/suspend and why, respectively.
     pub fn new<S1: Into<String>, S2: Into<String>>(
         logger: Logger,
