@@ -1,5 +1,5 @@
 pkgname='night-kitchen'
-pkgver='v0.1.1'
+pkgver='0.1.1'
 pkgrel=1
 pkgdesc='Periodic task runner for systems that are not always up'
 license=(MIT APACHE)
@@ -7,7 +7,7 @@ arch=('x86_64')
 url='https://github.com/bnavetta/night-kitchen'
 makedepends=(cargo git rust)
 depends=(dbus)
-source=("git+https://github.com/bnavetta/night-kitchen#tag=${pkgver}")
+source=("git+https://github.com/bnavetta/night-kitchen#tag=v${pkgver}")
 md5sums=('SKIP')
 noextract=()
 

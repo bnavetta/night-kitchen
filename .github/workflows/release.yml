@@ -1,0 +1,39 @@
+---
+
+name: Release Packages
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release_packages:
+    runs-on: ubuntu-latest
+    name: Create a binary release
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+      - name: Build an Arch Linux package
+        uses: bnavetta/arch-makepkg-action@master
+        with:
+          path: packaging/arch
+      - name: Create a GitHub release
+        id: create_release
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload Arch Linux package
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: packaging/arch/night-kitchen-${{ github.ref }}-1-x86_64.pkg.tar.xz
+          asset_name: night-kitchen-${{ github.ref }}-1-x86_64.pkg.tar.xz
+          asset_content_type: application/x-xz
+

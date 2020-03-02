@@ -4,6 +4,9 @@
 # See https://www.freedesktop.org/wiki/Software/systemd/dbus/ for systemd documentation
 # See https://www.freedesktop.org/wiki/Software/systemd/logind/ for the logind Manager documentation
 
+set -eou pipefail
+cd "$(git rev-parse --show-toplevel)"
+
 dbus-codegen-rust -s \
     -d org.freedesktop.systemd1 \
     -p /org/freedesktop/systemd1 \
