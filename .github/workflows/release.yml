@@ -27,13 +27,17 @@ jobs:
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # In the args to upload-release-asset, ${{ github.ref }} expands to refs/tags/<tag> instead of just <tag>
+      - name: Get release version
+        id: version
+        run: echo ::set-output name=tag::$(git describe --tags --exact-match)
       - name: Upload Arch Linux package
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: packaging/arch/night-kitchen-${{ github.ref }}-1-x86_64.pkg.tar.xz
-          asset_name: night-kitchen-${{ github.ref }}-1-x86_64.pkg.tar.xz
+          asset_path: packaging/arch/night-kitchen-${{ steps.version.outputs.tag }}-1-x86_64.pkg.tar.xz
+          asset_name: night-kitchen-${{ steps.version.outputs.tag }}-1-x86_64.pkg.tar.xz
           asset_content_type: application/x-xz
 
