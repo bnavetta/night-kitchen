@@ -23,5 +23,6 @@ cargo bump "$version"
 git add .
 git commit -m "Release v$version"
 git tag "v$version"
+git push
 git push --tags
 # This will kick off the GitHub workflow to create a release
