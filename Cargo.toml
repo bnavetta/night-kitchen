@@ -12,10 +12,13 @@ dbus = "0.8"
 itertools = "0.8"
 libc = "0.2"
 signal-hook = "0.1"
-slog = { version = "2.5", features = ["max_level_debug"] }
 slog-async = "2.4"
 slog-journald = "2.1"
 slog-term = "2.5"
+
+[dependencies.slog]
+version = "2.5"
+features = ["max_level_debug"]
 
 [[bin]]
 name = "night-kitchen-runner"
