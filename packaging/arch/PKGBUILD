@@ -1,5 +1,5 @@
 pkgname='night-kitchen'
-pkgver='0.1.2'
+pkgver='0.1.3'
 pkgrel=1
 pkgdesc='Periodic task runner for systems that are not always up'
 license=(MIT APACHE)
