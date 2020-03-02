@@ -4,12 +4,12 @@ set -eou pipefail
 cd "$(git rev-parse --show-toplevel)"
 
 if [ -n "$(git status --porcelain)" ]; then
-    echo "Working directory is not clean!" > &2
+    echo "Working directory is not clean!" >&2
     exit 1
 fi
 
-if [ $# -ne 2 ]; then
-    echo "Usage: $0 <version>" > &2
+if [ $# -ne 1 ]; then
+    echo "Usage: $0 <version>" >&2
     exit 1
 fi
 
