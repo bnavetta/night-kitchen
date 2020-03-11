@@ -1,12 +1,11 @@
 use std::env;
 use std::fs;
-use std::mem::MaybeUninit;
 use std::time::Duration;
 
 use anyhow::{bail, Context, Result};
 use chrono::{DateTime, TimeZone, Utc};
 use dbus::blocking::Connection;
-use libc;
+use nix::sys::sysinfo::sysinfo;
 use slog::{debug, error, info, Logger};
 
 use night_kitchen::{resume_timestamp_file, root_logger};
@@ -58,18 +57,16 @@ fn main() -> Result<()> {
 /// Returns `true` if night kitchen was most likely responsible for the system booting. This uses the current uptime
 /// as a heuristic, so it must be called early on
 fn caused_boot(logger: &Logger) -> bool {
-    // Use MaybeUninit to get a zeroed sysinfo_t struct for sysinfo() to fill in
-    let mut info: libc::sysinfo = unsafe { MaybeUninit::zeroed().assume_init() };
-
-    let status = unsafe { libc::sysinfo(&mut info) };
-
-    if status == 0 {
-        let uptime = Duration::from_secs(info.uptime as u64);
-        debug!(&logger, "Uptime is {:?}", uptime);
-        uptime < MIN_INNOCENT_UPTIME
-    } else {
-        error!(&logger, "sysinfo() failed, could not determine uptime");
-        false
+    match sysinfo() {
+        Ok(info) => {
+            let uptime = info.uptime();
+            debug!(&logger, "Uptime is {:?}", uptime);
+            uptime < MIN_INNOCENT_UPTIME
+        }
+        Err(err) => {
+            error!(&logger, "Could not determine uptime"; "error" => ?err);
+            false
+        }
     }
 }
 

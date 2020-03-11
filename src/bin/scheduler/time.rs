@@ -32,6 +32,7 @@ pub fn monotonic_to_realtime(monotonic: DateTime<Utc>) -> DateTime<Utc> {
 }
 
 fn clock_gettime(clock: libc::clockid_t) -> libc::timespec {
+    // nix doesn't have clock_gettime bindings yet (see https://github.com/nix-rust/nix/pull/1100)
     let mut timespec = libc::timespec {
         tv_sec: 0,
         tv_nsec: 0,

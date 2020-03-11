@@ -32,7 +32,7 @@ pub enum PowerEvent {
 /// uses systemd inhibitor locks to prevent the system from doing so until its callback has completed.
 ///
 /// See [the systemd documentation](https://www.freedesktop.org/wiki/Software/systemd/inhibit/) for more details.
-pub struct PowerMonitor<F: Fn(PowerEvent) + Send + Sync + 'static> {
+pub struct PowerMonitor<F: Fn(&Connection, PowerEvent) + Send + Sync + 'static> {
     // The "who" and "why" we're taking inhibitor locks
     inhibitor_source: String,
     inhibitor_reason: String,
@@ -42,7 +42,7 @@ pub struct PowerMonitor<F: Fn(PowerEvent) + Send + Sync + 'static> {
     logger: Logger,
 }
 
-impl<F: Fn(PowerEvent) + Send + Sync + 'static> PowerMonitor<F> {
+impl<F: Fn(&Connection, PowerEvent) + Send + Sync + 'static> PowerMonitor<F> {
     /// Create a new `PowerMonitor` that calls `callback` on any system power events it detects.
     ///
     /// The `inhibitor_source` and `inhibitor_reason` values are passed to systemd and indicate who is delaying shutdown/suspend and why, respectively.
@@ -126,14 +126,14 @@ impl<F: Fn(PowerEvent) + Send + Sync + 'static> PowerMonitor<F> {
                     let cb = &monitor.callback;
                     if p.arg0 {
                         info!(&monitor.logger, "About to sleep");
-                        cb(PowerEvent::PreSleep);
+                        cb(c, PowerEvent::PreSleep);
                         match monitor.release_inhibitor() {
                             Ok(_) => (),
                             Err(e) => error!(&monitor.logger, "Failed to release inhibitor"; "error" => ?e)
                         };
                     } else {
                         info!(&monitor.logger, "Resumed from sleep");
-                        cb(PowerEvent::PostSleep);
+                        cb(c, PowerEvent::PostSleep);
                         match monitor.take_inhibitor(c) {
                             Ok(_) => (),
                             Err(e) => error!(&monitor.logger, "Failed to take inhibitor"; "error" => ?e)
@@ -145,11 +145,11 @@ impl<F: Fn(PowerEvent) + Send + Sync + 'static> PowerMonitor<F> {
         }
 
         let _ = manager.match_signal(
-            move |p: OrgFreedesktopLogin1ManagerPrepareForShutdown, _: &Connection, message: &Message| {
+            move |p: OrgFreedesktopLogin1ManagerPrepareForShutdown, c: &Connection, message: &Message| {
                 let cb = &monitor.callback;
                 if p.arg0 {
                     info!(&monitor.logger, "About to shut down");
-                    cb(PowerEvent::PreShutdown);
+                    cb(c, PowerEvent::PreShutdown);
                     match monitor.release_inhibitor() {
                         Ok(_) => (),
                         Err(e) => error!(&monitor.logger, "Failed to release inhibitor"; "error" => ?e)
