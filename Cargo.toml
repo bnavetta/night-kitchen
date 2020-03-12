@@ -1,6 +1,6 @@
 [package]
 name = "night-kitchen"
-version = "0.1.4"
+version = "0.1.0"
 authors = ["Ben Navetta <ben.navetta@gmail.com>"]
 license = "MIT OR Apache-2.0"
 edition = "2018"
